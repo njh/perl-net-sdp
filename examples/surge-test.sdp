@@ -1,0 +1,13 @@
+v=0
+o=njh 3310066404 3310066404 IN IN4 hwickabab.ecs.soton.ac.uk
+s=SURGE Test Stream
+i=Multicast audio test stream. A message from SURGE on loop.
+u=http://www.surgeradio.co.uk/listen/advanced.html
+e=streaming@surgeradio.co.uk
+p=++44 (0)870 357 2252
+t=0 0
+a=tool:Net::SDP version 0.1
+a=type:test
+m=audio 5000 RTP/AVP 0
+c=IN IP6 FF1E:2001:630:d0:201:83::80/127
+a=rtpmap:0 PCMU/8000/1

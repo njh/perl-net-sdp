@@ -1,0 +1,74 @@
+Net-SDP version 0.02
+====================
+
+Net::SDP is a parser and generator for
+
+SDP - Session Description Protocol (rfc2327)
+
+Have a look at the example scripts for basic outline of
+how to use the module.
+
+
+INSTALLATION
+
+	I use Module::Build to build and install the module.
+	To install this module type the following:
+
+		perl Build.PL
+		./Build
+		./Build test
+
+	And then as root:
+	
+		./Build install
+
+	Module::Build is available in the Debian package:
+
+		libmodule-build-perl
+
+
+EXAMPLES
+
+	sdp2rat
+		Launch rat (Robust Audio Tool) with parameters taken from
+		an SDP file. This used to be a stand alone script which
+		I converted to use Net::SDP.
+
+	parse_and_generate.pl
+		This script should parse in an SDP file and re-create it.
+		The input and output should be the same (apart from a couple 
+		of line re-orderings perhaps). If you find a valid SDP file 
+		that Net::SDP cannot re-produce, please email it to me so 
+		that I can make corrections :)
+
+	sdpinfo.pl
+		Parses and displays basic information about an SDP session.
+		Shows example of how to process each of the Time and Media
+		descriptions.
+
+	simple_generate.pl
+		Creates a simple SDP session, with single time and media
+		description. Prints the resulting SDP data to STDOUT. 
+
+
+DEPENDENCIES
+
+	This module depends upon Sys::Hostname and Net::hostent,
+	which are both standard modules in recent perl distributions.
+	
+	LWP is recommended, but not required.
+
+
+AUTHOR
+
+	Nicholas Humfrey, njh@ecs.soton.ac.uk
+
+
+COPYRIGHT AND LICENSE
+
+	Copyright (C) 2004 University of Southampton
+
+	This library is free software; you can redistribute it and/or modify it
+	under the same terms as Perl itself, either Perl version 5.005 or, at
+	your option, any later version of Perl 5 you may have available.
+

@@ -1,0 +1,18 @@
+Revision history for Perl extension Net::SDP.
+
+0.03
+	Changes to specify no TTL for media descriptions.
+
+0.02 Tue Nov 23 17:33:22 2004
+	parse() can now take a Net::SAP::Packet object
+	new() now passes its parameters to parse()
+	Fix for bug #8019 - removed references to session
+	Changed _new() to new() in Media and Time classes
+	Added more/better tests
+	Documentation updates
+	Fixed bugs in session_origin_* methods
+	Added missing title field for Media descriptions
+
+0.01  Sun Jul 25 01:07:29 2004
+	First release
+	

@@ -1,0 +1,14 @@
+v=0
+o=- 31177 13 IN IP4 128.223.230.19
+s=KWAX Classical Radio (PCM)
+i=Live streaming radio from the University of Oregon's own KWAX Classical radio station.
+u=http://www.kwax.com/
+e=<multicast@lists.uoregon.edu>
+p=(541) 346-1758
+b=AS:64
+t=0 0
+a=tool:URD Script v1.0
+a=type:test
+m=audio 30556 RTP/AVP 0
+c=IN IP4 232.2.246.13/127
+a=incl:IN IP4 232.2.246.13 128.223.230.19
