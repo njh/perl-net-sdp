@@ -530,16 +530,6 @@ Example:
 
 =item B<default_format_num( num )>
 
-Changes the default format number/payload ID in the list of formats.
-The format number doesn't need to already be in the list of formats. B<[m=]>
-
-Example:
-
-	$audio->remove_format_num( 0 );
-
-
-=item B<default_format_num( num )>
-
 Gets or Set the default format number/payload ID in the list of formats.
 The format number doesn't need to already be in the list of formats. B<[m=]>
 

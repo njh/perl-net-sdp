@@ -912,7 +912,7 @@ Get or Set the session URI field. Used by WWW clients to get more information ab
 Example:
 
 	$name = $sdp->session_uri();
-	$sdp->session_uri( 'http://www.surge.soton.ac.uk' );
+	$sdp->session_uri( 'http://www.surgeradio.co.uk' );
 
 
 =item B<session_email()>
@@ -926,7 +926,7 @@ Example:
 
 	$email = $sdp->session_email();
 	$sdp->session_email( 'njh@ecs.soton.ac.uk' );
-	$sdp->session_email( ['njh@ecs.soton.ac.uk', 'njh@surge.soton.ac.uk'] );
+	$sdp->session_email( ['njh@ecs.soton.ac.uk', 'njh@surgeradio.co.uk'] );
 
 
 =item B<session_phone()>
