@@ -15,7 +15,7 @@ use vars qw/$VERSION/;
 use constant NTPOFFSET => 2208988800;
 use Carp;
 
-$VERSION="0.02";
+$VERSION="0.03";
 
 
 

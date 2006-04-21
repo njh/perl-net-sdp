@@ -13,7 +13,7 @@ package Net::SDP::Media;
 use strict;
 use vars qw/$VERSION %static_pt_map/;
 use Carp;
-$VERSION="0.02";
+$VERSION="0.03";
 
 
 

@@ -1,7 +1,8 @@
 Revision history for Perl extension Net::SDP.
 
-0.03
+0.03  Fri Apr 21 22:24:36 BST 2006
 	Changes to specify no TTL for media descriptions.
+	Added Makefile.PL compatibility
 
 0.02 Tue Nov 23 17:33:22 2004
 	parse() can now take a Net::SAP::Packet object

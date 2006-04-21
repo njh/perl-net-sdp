@@ -15,6 +15,9 @@ my $build = Module::Build->new
 		'Sys::Hostname' => 0,
 		'Net::hostent' => 0,
 	},
+	
+	create_makefile_pl => 'passthrough',
+	
 	recommends => {
 		'LWP::Simple' => 0,
 	},
