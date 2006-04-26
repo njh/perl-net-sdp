@@ -36,7 +36,7 @@ sub new {
     				'o_sess_id' => Net::SDP::Time::_ntptime(),
     				'o_sess_vers' => Net::SDP::Time::_ntptime(),
     				'o_net_type' => 'IN',
-    				'o_addr_type' => 'IN4',
+    				'o_addr_type' => 'IP4',
     				'o_address' => gethost(hostname())->name(),
     				'p' => [],
     				'e' => [],
@@ -810,7 +810,7 @@ Get or Set the whole of the session origin field. B<[o=]>
 Example:
 
 	$origin = $sdp->session_origin();
-	$sdp->session_origin( 'njh 3303643609 3303643669 IN IN4 152.78.104.83' );
+	$sdp->session_origin( 'njh 3303643609 3303643669 IN IP4 152.78.104.83' );
   
 
 =item B<session_origin_username()>
@@ -1040,6 +1040,8 @@ Example:
 =head1 TODO
 
 =over
+
+=item Stricter parsing of SDP, so that it can be used as a validator
 
 =item Deal with multiple email / phone numbers better (e=) (p=)
 
