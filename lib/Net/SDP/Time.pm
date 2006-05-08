@@ -15,7 +15,7 @@ use vars qw/$VERSION/;
 use constant NTPOFFSET => 2208988800;
 use Carp;
 
-$VERSION="0.03";
+$VERSION="0.04";
 
 
 
@@ -24,6 +24,7 @@ sub new {
 	my $self = {
 		't_start' => '0',
 		't_end' => '0',
+		'r'	=> [],
 	};
 	bless $self, $class;	
 
@@ -64,11 +65,56 @@ sub _generate_t {
 	return "t=".$self->{'t_start'}.' '.$self->{'t_end'}."\n";
 }
 
+sub _parse_r {
+	my $self = shift;
+	my ($r) = @_;
+	
+	if ( $self->is_permanent ) {
+		carp "corrupt packet, you cannot have a repeat field for a permanent session";
+		return;
+	}
+	
+	# we need at least three
+	# r=<repeat-interval> <active duration> <offsets from start-time>
+	if ( $r !~ /^([0-9]+[dhms]?)( [0-9]+[dhms]?){2,}$/ ) {
+		carp "Invalid 'r' passed: $r";
+		return 0;
+	}
+
+	my @values = split / /, $r;
+	_repeat_push($self, \@values);
+}
+
+sub _generate_r {
+	my $self = shift;
+	
+	return '' if ( scalar(@{$self->{r}}) > 0 );
+
+	my $result = '';
+	foreach my $item ( 0...(scalar(@{$self->{r}}) - 1) )
+	{
+		my $element = _rollup_seconds($self->{r}->[$item]->{interval}) . ' '
+				    . _rollup_seconds($self->{r}->[$item]->{duration});
+		foreach my $offset ( 0...(scalar(@{$self->{r}->[$item]->{offsets}}) - 1) ) {
+			$element .= ' '
+				     . _rollup_seconds($self->{r}->[$item]->{offsets}->[$offset]);
+		}
+	  
+		$result .= 'r=' . $element . "\n";
+	}
+
+	return $result;
+}
+
 
 sub start_time_ntp {
     my $self=shift;
 	my ($start_time) = @_;
-    $self->{'t_start'} = $start_time if defined $start_time;
+	if ( defined $start_time ) {
+		$self->{'t_start'} = $start_time;
+		# you cannot have a permanent session with repeat interval
+		$self->repeat_delete_all if ( $start_time == 0 );
+	}
 	return $self->{'t_start'};
 }
 
@@ -82,7 +128,11 @@ sub end_time_ntp {
 sub start_time_unix {
     my $self=shift;
 	my ($start_time) = @_;
-    $self->{'t_start'} = $start_time + NTPOFFSET if defined $start_time;
+	if ( defined $start_time ) {
+		$self->{'t_start'} = $start_time + NTPOFFSET;
+		# you cannot have a permanent session with repeat interval
+		$self->repeat_delete_all if ( $start_time == - NTPOFFSET );
+	}
     return 0 if ($self->{'t_start'}==0);
     return $self->{'t_start'} - NTPOFFSET;
 }
@@ -120,8 +170,10 @@ sub make_permanent {
     my $self=shift;
 	$self->{'t_start'} = 0;
 	$self->{'t_end'} = 0;
-}
 
+    # you cannot have a permanent session with repeat intervals
+    $self->repeat_delete_all;
+}
 
 sub is_unbounded {
     my $self=shift;
@@ -142,6 +194,150 @@ sub as_string {
 	return $self->start_time()." until ".$self->end_time();
 }
 
+sub repeat_add {
+    my $self=shift;
+
+    my $interval = shift;
+    my $duration = shift;
+    my $offsets = shift;
+    
+    if ( $self->is_permanent ) {
+		carp "repeat_add failed, you cannot have a repeat field for a permanent session";
+		return;
+    }
+    
+	$offsets = [ $offsets ] if ( ref($offsets) eq 'SCALAR' );
+    
+	my @values = ( $interval, $duration, ( @$offsets ) );
+	_repeat_push($self, \@values);
+
+	return $self->{r}->[-1];
+}
+
+sub repeat_delete {
+	my $self=shift;
+	
+	my $num = shift;
+	
+	return 1 if ( !defined($num) || !defined($self->{r}->[$num]) );
+	
+	my $results = [ ];
+	for my $loop ( 0...(scalar(@{$self->{r}}) - 1) ) {
+		next if ( $loop == $num );
+		
+		push @$results, $self->{r}->[$loop];
+	}
+	$self->{r} = $results;
+	
+	return 0;
+}
+
+sub repeat_delete_all {
+    my $self=shift;
+
+    $self->{r} = [ ];
+}
+
+sub repeat_desc {
+	my $self=shift;
+	
+	my $num = shift;
+	
+	$num = 0 if ( !defined($num) );
+	
+	return undef if ( !defined($self->{r}->[$num]) );
+	
+	return $self->{r}->[$num];
+}
+
+sub repeat_desc_arrayref {
+	my $self=shift;
+	
+	return $self->{r};
+}
+
+sub _rollup_seconds {
+	my $value = shift;
+	
+	if ( $value !~ /^[0-9]+[dhms]?$/ ) {
+		carp "Invalid value parsed to _rollup_seconds: $value";
+		return;
+	}
+	
+	# if its already partially rolled up we should unroll it all first
+	$value = _rollout_seconds($value)
+	if ( $value !~ /^[0-9]+[dhms]$/ );
+	
+	# if its zero do nothing with it
+	return 0 if ( $value == 0 );
+	
+	# try reducing to days
+	if ( ( $value % 86400 ) == 0 ) {
+		$value = ( $value / 86400 ) . 'd';
+	}
+	# try reducing to hours
+	elsif ( ( $value % 3600 ) == 0 ) {
+		$value = ( $value / 3600 ) . 'h';
+	}
+	# and finally try to minutes
+	elsif ( ( $value % 60 ) == 0 ) {
+		$value = ( $value / 60 ) . 'm';
+	}
+	
+	return $value;
+}
+
+sub _rollout_seconds {
+  my $value = shift;
+
+	if ( $value !~ /^[0-9]+[dhms]?$/ ) {
+		carp "Invalid value parsed to _rollout_seconds: $value";
+		return;
+	}
+	
+	# test for a NOOP
+	if ( $value =~ /^[0-9]+s?$/ ) {
+		$value = substr($value, 0, -1) if ( substr($value, -1, 1) eq 's' );
+		return int($value);
+	}
+	
+	my $unit = substr($value, -1, 1);
+	$value = substr($value, 0, -1);
+	
+	if ( $unit eq 'd' ) {
+		$value *= 86400;
+	}
+	elsif ( $unit eq 'h' ) {
+		$value *= 3600;
+	}
+	# must be 'm' (minutes)
+	else {
+		$value *= 60;
+	}
+	
+	return int($value);
+}
+
+sub _repeat_push {
+	my $self=shift;
+	
+	my $values = shift;
+	
+	foreach my $item ( 0...(scalar(@$values) - 1) ) {
+		$values->[$item] = _rollout_seconds($values->[$item]);
+	}
+	
+	my $rProcessed = {
+		interval	=> shift @$values,
+		duration	=> shift @$values,
+		offsets		=> [ ]
+	};
+	foreach my $offset ( @$values ) {
+		push @{$rProcessed->{offsets}}, $offset;
+	}
+	
+	push @{$self->{r}}, $rProcessed;
+}
 
 1;
 
@@ -254,6 +450,28 @@ Returns false if the session has an end time. B<[t=]>
 
 Makes the session unbounded - no end time. B<[t=]>
 
+=item B<repeat_add($interval, $duration, $offset)>
+
+Add a new repeat field. $offset can either be 
+a SCALAR or an ARRAYREF. B<[r=]>
+
+=item B<repeat_delete($num)>
+
+Delete repeat field element $num.  
+Returns 0 on sucess, 1 if its a bad request. B<[r=]>
+
+=item B<repeat_delete_all()>
+
+Deletes any exising repeat fields. B<[r=]>
+
+=item B<repeat_desc($num)>
+
+Returns repeat array element $num.  If $num is not passed then the first 
+element is assumed.
+
+=item B<repeat_desc_arrayref()>
+
+Returns the whole repeat arrayref.
 
 =item B<as_string()>
 

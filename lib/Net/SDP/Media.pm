@@ -13,7 +13,7 @@ package Net::SDP::Media;
 use strict;
 use vars qw/$VERSION %static_pt_map/;
 use Carp;
-$VERSION="0.03";
+$VERSION="0.04";
 
 
 
@@ -22,7 +22,7 @@ $VERSION="0.03";
 # http://www.iana.org/assignments/rtp-parameters
 # http://www.iana.org/assignments/media-types/
 
-%static_pt_map = (
+%avt_profile_map = (
 	'0' => 'audio/PCMU/8000/1',
 #	'1'	=> reserved
 #	'2'	=> reserved
@@ -320,8 +320,8 @@ sub format_list {
 	foreach (@{$self->{'m_fmt_list'}}) {
 		if (exists $rtpmap{$_}) {
 			$fmt_list->{$_} = $rtpmap{$_};
-		} elsif (exists $static_pt_map{$_}) {
-			$fmt_list->{$_} = $static_pt_map{$_};
+		} elsif (exists $avt_profile_map{$_}) {
+			$fmt_list->{$_} = $avt_profile_map{$_};
 		} else {
 			$fmt_list->{$_} = '';
 		}
@@ -344,7 +344,7 @@ sub add_format {
 
 	# Mime type specified ?
 	if (!defined $mime) {
-		$mime = $static_pt_map{$format_num};
+		$mime = $avt_profile_map{$format_num};
 	}
 	
 	if (!defined $mime) {

@@ -22,7 +22,7 @@ use Sys::Hostname;
 use Net::hostent;
 use Carp;
 
-$VERSION="0.03";
+$VERSION="0.04";
 
 
 
@@ -183,20 +183,24 @@ sub parse_data {
 
 			} elsif ($field eq 'r') {
 				
-				## Add to last time descriptor			
-				# XXXXXX Check array exists XXXXXX
-				#$self->{'time'}->[-1]->{$field} = $value;
+				# Add to last time descriptor
+				unless ( $self->{'time'}->[-1] ) {
+				  carp "No previous 't' parameter to associate 'r' with: $line\n";
+				  next;
+				}
 
-			} elsif ($field =~ /o/) {
+				$self->{'time'}->[-1]->_parse_r($value);
+
+			} elsif ($field eq 'o') {
 
 				$self->_parse_o( $value );
 
-			} elsif ($field =~ /p|e/) {
+			} elsif ($field eq 'p' || $field eq 'e') {
 				
 				# Phone and email can have more than one value
 				push( @{$self->{'session'}->{$field}}, $value );
 
-			} elsif ($field =~ /a|b/) {
+			} elsif ($field eq 'a' || $field eq 'b') {
 			
 				# More than one value is allowed
 				_add_attribute( $self->{'session'}, $field, $value );
@@ -312,6 +316,7 @@ sub generate {
 	foreach my $time ( @{$self->{'time'}} ) {
 		$sdp .= $time->_generate_t();
 		#$sdp .= _generate_lines($time, 'z', 1 );
+		$sdp .= $time->_generate_r();
 	}
 
 	$sdp .= _generate_lines($session, 'k', 1 );
