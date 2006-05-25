@@ -21,7 +21,7 @@ o=njh 3310066404 3310066410 IN IP4 152.78.64.103
 s=Session Name
 i=Session Information
 u=http://www.w3.org/
-e=email\@email.com
+e=email\@example.com
 p=0123 456 789
 t=0 0
 a=type:test
@@ -58,7 +58,7 @@ ok( $sdp->session_info(), 'Session Information' );
 ok( $sdp->session_uri(), 'http://www.w3.org/' );
 
 # Test 12: Session Email
-ok( $sdp->session_email(), 'email@email.com' );
+ok( $sdp->session_email(), 'email@example.com' );
 
 # Test 13: Session Phone
 ok( $sdp->session_phone(), '0123 456 789' );

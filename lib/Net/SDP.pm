@@ -549,13 +549,13 @@ sub session_email {
 	}
 
     # Multiple emails are allowed, but we just return the first
-    if (defined $session->{'e'}) {
+    if (exists $session->{'e'}->[0]) {
     	return $session->{'e'}->[0];
     }
     return undef;
 }
 
-sub session_email_desc_arrayref {
+sub session_email_arrayref {
     my $self=shift;
     my $session = $self->{'session'};
     
@@ -580,13 +580,13 @@ sub session_phone {
 	}
 
     # Multiple phone numbers are allowed, but we just return the first
-    if (defined $session->{'p'}) {
+    if (exists $session->{'p'}->[0]) {
     	return $session->{'p'}->[0];
     }
     return undef;
 }
 
-sub session_phone_desc_arrayref {
+sub session_phone_arrayref {
     my $self=shift;
     my $session = $self->{'session'};
     
@@ -671,10 +671,14 @@ sub session_del_attribute {
 	my ($name) = @_;
 	carp "Missing attribute name" unless (defined $name);
 
-	if ( $self->{'session'}->{'a'}->{$name} ) {
-	  delete $self->{'session'}->{'a'}->{$name};
+	if ( exists $self->{'session'}->{'a'}->{$name} ) {
+		delete $self->{'session'}->{'a'}->{$name};
 	}
 }
+
+
+
+
 
 # Returns first media description of specified type
 sub media_desc_of_type {
@@ -698,14 +702,16 @@ sub media_desc_arrayref {
 }
 
 # delete all Net::SDP::Media elements
-sub media_delete_all {
+sub media_desc_delete_all {
 	my ($self) = @_;
 
 	$self->{'media'} = [ ];
+	
+	return 0;
 }
 
 # delete a specific ARRAYREF Net::SDP::Media element
-sub media_delete {
+sub media_desc_delete {
 	my $self = shift;
              my ($num) = @_;
 	
@@ -726,10 +732,10 @@ sub media_delete {
 # first time description by default if nothing is passed to it
 sub time_desc {
 	my $self = shift;
-	  my ($num) = @_;
+	my ($num) = @_;
 	
-	$num = 0 if ( !defined($num) );
-	return undef if ( !defined($self->{'time'}->[$num]) );
+	$num = 0 unless ( defined $num );
+	return undef unless ( defined($self->{'time'}->[$num]) );
 
 	## Ensure that one exists ?
 	return $self->{'time'}->[$num];
@@ -743,18 +749,21 @@ sub time_desc_arrayref {
 }
 
 # delete all Net::SDP::Time elements
-sub time_delete_all {
+sub time_desc_delete_all {
 	my ($self) = @_;
 
 	$self->{'time'} = [ ];
+	
+	return 0;
 }
 
 # delete a specific ARRAYREF Net::SDP::Time element
-sub time_delete {
+sub time_desc_delete {
 	my $self = shift;
-             my ($num) = @_;
+	my ($num) = @_;
 	
-	return 1 if ( !defined($num) || !defined($self->{'time'}->[$num]) );
+	return 1 unless ( defined $num );
+	return 1 unless ( defined $self->{'time'}->[$num] );
 
 	my $results = [ ];
 	for my $loop ( 0...(scalar(@{$self->{'time'}}) - 1) ) {
@@ -1010,6 +1019,11 @@ Example:
 	$sdp->session_email( 'njh@ecs.soton.ac.uk' );
 	$sdp->session_email( ['njh@ecs.soton.ac.uk', 'njh@surgeradio.co.uk'] );
 
+=item B<session_email_arrayref()>
+
+Returns all email addresses as an array reference. Will return an
+empty ARRAYREF if no email addresses are available.
+
 
 =item B<session_phone()>
 
@@ -1023,6 +1037,12 @@ Example:
 	$phone = $sdp->session_phone();
 	$sdp->session_phone( '+44 870 357 2287' );
 	$sdp->session_phone( ['0870 357 2287', '41287'] );
+
+
+=item B<session_phone_arrayref()>
+
+Returns all phone numbers as an array reference. Will return an
+empty ARRAYREF if no phone numbers are available.
 
 
 =item B<session_key( method, [key] )>
@@ -1075,6 +1095,14 @@ Example:
 
 	$audio->session_add_attribute( 'lang', 'en');
 	$audio->session_add_attribute( 'lang', 'fr');
+	
+	
+=item B<session_del_attribute( name )>
+
+Deletes all attributes of given name.
+Example:
+
+	$audio->session_del_attribute( 'lang' );
 
 
 =item B<media_desc_of_type( type )>
@@ -1092,15 +1120,26 @@ Returns an ARRAYREF of all the media descriptions - C<Net::SDP::Media> objects.
 
 
 
-=item B<time_desc()>
+=item B<time_desc( [$num] )>
 
-Returns the first time description (as a C<Net::SDP::Time>).
+Returns the time description with index number $num. 
+Returns the first time description if, $num is undefined.
+Return undef if no time description of chosen index is available.
+Returns a C<Net::SDP::Time>.
 
 
 =item B<time_desc_arrayref()>
 
 Returns an ARRAYREF of all the time descriptions - C<Net::SDP::Time> objects.
 
+=item B<time_desc_delete( $num )>
+
+Delete time description with index C<$num>.
+Returns 0 if successful or 1 on failure.
+
+=item B<time_desc_delete_all()>
+
+Deletes all time descriptors.
 
 =item B<new_time_desc()>
 

@@ -52,8 +52,14 @@ sub _parse_t {
 	my $self = shift;
 	my ($t) = @_;
 	
-	($self->{'t_start'},
-	 $self->{'t_end'}) = split(/\s/, $t);
+	# we need two positive integers
+	# t=<start-time> <end-time>
+	if ( $t !~ /^([0-9]+) ([0-9]+)$/ ) {
+		warn "Invalid 't' passed: $t";
+		return 0;
+	}
+
+	($self->{'t_start'}, $self->{'t_end'}) = split(/ /, $t);
 	
 	# Success
 	return 1;
@@ -70,36 +76,37 @@ sub _parse_r {
 	my ($r) = @_;
 	
 	if ( $self->is_permanent ) {
-		carp "corrupt packet, you cannot have a repeat field for a permanent session";
-		return;
+		warn "corrupt packet, you cannot have a repeat field for a permanent session";
+		return 0;
 	}
 	
 	# we need at least three
 	# r=<repeat-interval> <active duration> <offsets from start-time>
 	if ( $r !~ /^([0-9]+[dhms]?)( [0-9]+[dhms]?){2,}$/ ) {
-		carp "Invalid 'r' passed: $r";
+		warn "Invalid 'r' passed: $r";
 		return 0;
 	}
 
 	my @values = split / /, $r;
 	_repeat_push($self, \@values);
+	
+	# Success
+	return 1;
 }
 
 sub _generate_r {
 	my $self = shift;
 	
-	return '' if ( scalar(@{$self->{'r'}}) > 0 );
-
 	my $result = '';
-	foreach my $item ( 0...(scalar(@{$self->{'r'}}) - 1) )
+	foreach my $item ( @{$self->{'r'}} )
 	{
-		my $element = _rollup_seconds($self->{'r'}->[$item]->{'interval'}) . ' '
-				    . _rollup_seconds($self->{'r'}->[$item]->{'duration'});
-		foreach my $offset ( 0...(scalar(@{$self->{'r'}->[$item]->{'offsets'}}) - 1) ) {
-			$element .= ' '
-				     . _rollup_seconds($self->{'r'}->[$item]->{'offsets'}->[$offset]);
+		my $element = _rollup_seconds($item->{'interval'}) . ' '
+				    . _rollup_seconds($item->{'duration'});
+
+		foreach my $offset ( @{$item->{'offsets'}} ) {
+			$element .= ' ' . _rollup_seconds( $offset );
 		}
-	  
+		
 		$result .= 'r=' . $element . "\n";
 	}
 
@@ -199,17 +206,18 @@ sub as_string {
 
 sub repeat_add {
     my $self=shift;
-
-    my $interval = shift;
-    my $duration = shift;
-    my $offsets = shift;
+	my ($interval, $duration, $offsets) = @_;
+	carp "Missing interval parameter" unless (defined $interval);
+	carp "Missing duration parameter" unless (defined $duration);
+	carp "Missing offsets parameter" unless (defined $offsets);
     
     if ( $self->is_permanent ) {
 		carp "repeat_add failed, you cannot have a repeat field for a permanent session";
 		return;
     }
     
-	$offsets = [ $offsets ] if ( ref($offsets) eq 'SCALAR' );
+    # Make it is hashref if only one offset passed
+	$offsets = [ $offsets ] if ( ref($offsets) ne 'ARRAY' );
     
 	my @values = ( $interval, $duration, ( @$offsets ) );
 	_repeat_push($self, \@values);
@@ -219,8 +227,7 @@ sub repeat_add {
 
 sub repeat_delete {
 	my $self=shift;
-	
-	my $num = shift;
+	my ($num) = @_;
 	
 	return 1 if ( !defined($num) || !defined($self->{'r'}->[$num]) );
 	
@@ -239,6 +246,8 @@ sub repeat_delete_all {
     my $self=shift;
 
     $self->{'r'} = [ ];
+    
+    return 0;
 }
 
 sub repeat_desc {
@@ -456,28 +465,59 @@ Returns false if the session has an end time. B<[t=]>
 
 Makes the session unbounded - no end time. B<[t=]>
 
+
 =item B<repeat_add($interval, $duration, $offset)>
 
-Add a new repeat field. $offset can either be 
-a SCALAR or an ARRAYREF. B<[r=]>
+For a session that shows every day (86400, 1440m, 24h or 1d) for one hour 
+ (3600, 60m or 1h) with an origin time from $time->start_time_ntp().  This 
+ session then repeats that day six hours (21600, or 360m or 6h) later.
+
+	my ( $interval, $duration ) = ( 86400, 3600 );
+	my $offsets = [ 0, 21600 ]; # ARRAYREF
+	$time->repeat_add($interval, $duration, $offsets);
+
+This produces an 'r' field of: r=1d 1h 0 6h
+
+RFC2327 (http://www.ietf.org/rfc/rfc2327.txt), page 14 titled
+"Times, Repeat Times and Time Zones" should be consulted for clarification.
+
+N.B. $offsets can be a single value (typically 0) regular SCALAR instead but 
+	then you obviously only get a single value
+
+B<[r=]>
+
 
 =item B<repeat_delete($num)>
 
 Delete repeat field element $num.  
 Returns 0 on sucess, 1 if its a bad request. B<[r=]>
 
+
 =item B<repeat_delete_all()>
 
 Deletes any exising repeat fields. B<[r=]>
 
+
 =item B<repeat_desc($num)>
 
-Returns repeat array element $num.  If $num is not passed then the first 
-element is assumed.
+Returns repeat array element $num.  
+
+	my $repeat = $time->repeat_desc(2);
+
+If element does not exist 'undef' is returned, if nothing is passed to the 
+function it defaults to the first element.  The format of the 'reply' is 
+(all values are in seconds):
+
+	$repeat = { 
+	    interval  => <interval>, 
+	    duration  => <duration>,
+	    offsets  => [ <offset1>, <offset2> ... ]
+	};
 
 =item B<repeat_desc_arrayref()>
 
-Returns the whole repeat arrayref.
+Returns all the repeat elements in an ARRAYREF.
+
 
 =item B<as_string()>
 
@@ -492,6 +532,8 @@ Example:
 =head1 AUTHOR
 
 Nicholas Humfrey, njh@ecs.soton.ac.uk
+
+Alexander Clouter, alex@digriz.org.uk
 
 =head1 COPYRIGHT AND LICENSE
 
