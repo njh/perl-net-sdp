@@ -88,16 +88,16 @@ sub _parse_r {
 sub _generate_r {
 	my $self = shift;
 	
-	return '' if ( scalar(@{$self->{r}}) > 0 );
+	return '' if ( scalar(@{$self->{'r'}}) > 0 );
 
 	my $result = '';
-	foreach my $item ( 0...(scalar(@{$self->{r}}) - 1) )
+	foreach my $item ( 0...(scalar(@{$self->{'r'}}) - 1) )
 	{
-		my $element = _rollup_seconds($self->{r}->[$item]->{interval}) . ' '
-				    . _rollup_seconds($self->{r}->[$item]->{duration});
-		foreach my $offset ( 0...(scalar(@{$self->{r}->[$item]->{offsets}}) - 1) ) {
+		my $element = _rollup_seconds($self->{'r'}->[$item]->{'interval'}) . ' '
+				    . _rollup_seconds($self->{'r'}->[$item]->{'duration'});
+		foreach my $offset ( 0...(scalar(@{$self->{'r'}->[$item]->{'offsets'}}) - 1) ) {
 			$element .= ' '
-				     . _rollup_seconds($self->{r}->[$item]->{offsets}->[$offset]);
+				     . _rollup_seconds($self->{'r'}->[$item]->{'offsets'}->[$offset]);
 		}
 	  
 		$result .= 'r=' . $element . "\n";
@@ -186,6 +186,9 @@ sub is_unbounded {
 sub make_unbounded {
     my $self=shift;
 	$self->{'t_end'} = 0;
+
+    # you cannot have a permanent session with repeat intervals
+    $self->repeat_init;
 }
 
 sub as_string {
@@ -211,7 +214,7 @@ sub repeat_add {
 	my @values = ( $interval, $duration, ( @$offsets ) );
 	_repeat_push($self, \@values);
 
-	return $self->{r}->[-1];
+	return $self->{'r'}->[-1];
 }
 
 sub repeat_delete {
@@ -219,15 +222,15 @@ sub repeat_delete {
 	
 	my $num = shift;
 	
-	return 1 if ( !defined($num) || !defined($self->{r}->[$num]) );
+	return 1 if ( !defined($num) || !defined($self->{'r'}->[$num]) );
 	
 	my $results = [ ];
-	for my $loop ( 0...(scalar(@{$self->{r}}) - 1) ) {
+	for my $loop ( 0...(scalar(@{$self->{'r'}}) - 1) ) {
 		next if ( $loop == $num );
 		
-		push @$results, $self->{r}->[$loop];
+		push @$results, $self->{'r'}->[$loop];
 	}
-	$self->{r} = $results;
+	$self->{'r'} = $results;
 	
 	return 0;
 }
@@ -235,7 +238,7 @@ sub repeat_delete {
 sub repeat_delete_all {
     my $self=shift;
 
-    $self->{r} = [ ];
+    $self->{'r'} = [ ];
 }
 
 sub repeat_desc {
@@ -245,15 +248,18 @@ sub repeat_desc {
 	
 	$num = 0 if ( !defined($num) );
 	
-	return undef if ( !defined($self->{r}->[$num]) );
+	return undef if ( !defined($self->{'r'}->[$num]) );
 	
-	return $self->{r}->[$num];
+	return $self->{'r'}->[$num];
 }
 
 sub repeat_desc_arrayref {
 	my $self=shift;
 	
-	return $self->{r};
+	if ( defined($self->{'r'}) ) {
+	  return $self->{'r'};
+	}
+	return undef;
 }
 
 sub _rollup_seconds {
@@ -333,10 +339,10 @@ sub _repeat_push {
 		offsets		=> [ ]
 	};
 	foreach my $offset ( @$values ) {
-		push @{$rProcessed->{offsets}}, $offset;
+		push @{$rProcessed->{'offsets'}}, $offset;
 	}
 	
-	push @{$self->{r}}, $rProcessed;
+	push @{$self->{'r'}}, $rProcessed;
 }
 
 1;

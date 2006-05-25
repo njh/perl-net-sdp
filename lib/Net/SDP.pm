@@ -555,6 +555,16 @@ sub session_email {
     return undef;
 }
 
+sub session_email_desc_arrayref {
+    my $self=shift;
+    my $session = $self->{'session'};
+    
+    if (defined $session->{'e'}) {
+        return $session->{'e'};
+    }
+    return undef;
+}
+
 sub session_phone {
     my $self=shift;
 	my ($p) = @_;
@@ -572,6 +582,16 @@ sub session_phone {
     # Multiple phone numbers are allowed, but we just return the first
     if (defined $session->{'p'}) {
     	return $session->{'p'}->[0];
+    }
+    return undef;
+}
+
+sub session_phone_desc_arrayref {
+    my $self=shift;
+    my $session = $self->{'session'};
+    
+    if (defined $session->{'p'}) {
+        return $session->{'p'};
     }
     return undef;
 }
@@ -645,10 +665,16 @@ sub session_add_attribute {
 	Net::SDP::_add_attribute( $self->{'session'}, 'a', $attrib );
 }
 
+# Delete a session atrribute
+sub session_del_attribute {
+	my $self = shift;
+	my ($name) = @_;
+	carp "Missing attribute name" unless (defined $name);
 
-
-
-
+	if ( $self->{'session'}->{'a'}->{$name} ) {
+	  delete $self->{'session'}->{'a'}->{$name};
+	}
+}
 
 # Returns first media description of specified type
 sub media_desc_of_type {
@@ -671,12 +697,42 @@ sub media_desc_arrayref {
 	return $self->{'media'};
 }
 
-# Return first time description
-sub time_desc {
+# delete all Net::SDP::Media elements
+sub media_delete_all {
 	my ($self) = @_;
 
+	$self->{'media'} = [ ];
+}
+
+# delete a specific ARRAYREF Net::SDP::Media element
+sub media_delete {
+	my $self = shift;
+             my ($num) = @_;
+	
+	return 1 if ( !defined($num) || !defined($self->{'media'}->[$num]) );
+
+	my $results = [ ];
+	for my $loop ( 0...(scalar(@{$self->{'media'}}) - 1) ) {
+		next if ( $loop == $num );
+		
+		push @$results, $self->{'media'}->[$loop];
+	}
+	$self->{'media'} = $results;
+
+	return 0;
+}
+
+# Return $num time description, for backwards compatibility the
+# first time description by default if nothing is passed to it
+sub time_desc {
+	my $self = shift;
+	  my ($num) = @_;
+	
+	$num = 0 if ( !defined($num) );
+	return undef if ( !defined($self->{'time'}->[$num]) );
+
 	## Ensure that one exists ?
-	return $self->{'time'}->[0];
+	return $self->{'time'}->[$num];
 }
 
 # Return all time descriptions
@@ -686,9 +742,30 @@ sub time_desc_arrayref {
 	return $self->{'time'};
 }
 
+# delete all Net::SDP::Time elements
+sub time_delete_all {
+	my ($self) = @_;
 
+	$self->{'time'} = [ ];
+}
 
+# delete a specific ARRAYREF Net::SDP::Time element
+sub time_delete {
+	my $self = shift;
+             my ($num) = @_;
+	
+	return 1 if ( !defined($num) || !defined($self->{'time'}->[$num]) );
 
+	my $results = [ ];
+	for my $loop ( 0...(scalar(@{$self->{'time'}}) - 1) ) {
+		next if ( $loop == $num );
+		
+		push @$results, $self->{'time'}->[$loop];
+	}
+	$self->{'time'} = $results;
+
+	return 0;
+}
 
 
 # Net::SDP::Time factory method
