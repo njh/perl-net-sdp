@@ -1119,6 +1119,16 @@ Example:
 Returns an ARRAYREF of all the media descriptions - C<Net::SDP::Media> objects.
 
 
+=item B<media_desc_delete_all()>
+
+Deletes all media descriptors.
+
+
+=item B<media_desc_delete( $num )>
+
+Delete media description with index C<$num>.
+Returns 0 if successful or 1 on failure.
+
 
 =item B<time_desc( [$num] )>
 
@@ -1132,14 +1142,17 @@ Returns a C<Net::SDP::Time>.
 
 Returns an ARRAYREF of all the time descriptions - C<Net::SDP::Time> objects.
 
+
+=item B<time_desc_delete_all()>
+
+Deletes all time descriptors.
+
+
 =item B<time_desc_delete( $num )>
 
 Delete time description with index C<$num>.
 Returns 0 if successful or 1 on failure.
 
-=item B<time_desc_delete_all()>
-
-Deletes all time descriptors.
 
 =item B<new_time_desc()>
 
