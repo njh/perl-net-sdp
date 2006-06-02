@@ -3,7 +3,7 @@ use strict;
 use Test;
 
 # use a BEGIN block so we print our plan before Net::SDP is loaded
-BEGIN { plan tests => 15 }
+BEGIN { plan tests => 17 }
 
 # load Net::SDP
 use Net::SDP;
