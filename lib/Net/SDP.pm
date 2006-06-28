@@ -4,8 +4,8 @@ package Net::SDP;
 #
 # Net::SDP - Session Description Protocol (rfc2327)
 #
-# Nicholas Humfrey
-# njh@ecs.soton.ac.uk
+# Nicholas J Humfrey
+# njh@cpan.org
 #
 # See the bottom of this file for the POD documentation. 
 #
@@ -22,7 +22,7 @@ use Sys::Hostname;
 use Net::hostent;
 use Carp;
 
-$VERSION="0.04";
+$VERSION="0.05";
 
 
 
@@ -32,12 +32,12 @@ sub new {
     
     my $self = {'v'=>'0',
     			'session'=> {
-     				'o_uname' => $ENV{'USER'} || '-',
-    				'o_sess_id' => Net::SDP::Time::_ntptime(),
-    				'o_sess_vers' => Net::SDP::Time::_ntptime(),
-    				'o_net_type' => 'IN',
-    				'o_addr_type' => 'IP4',
-    				'o_address' => gethost(hostname())->name(),
+     				'o_uname' => '',
+    				'o_sess_id' => 0,
+    				'o_sess_vers' => 0,
+    				'o_net_type' => '',
+    				'o_addr_type' => '',
+    				'o_address' => '',
     				'p' => [],
     				'e' => [],
     				'a' => {}
@@ -51,7 +51,21 @@ sub new {
    	# Parse data if we are passed some
    	if (defined $data) {
    		$self->parse( $data );
-   	}
+   	} else {
+   		# Use sane defaults
+   		$self->{'session'}->{'o_uname'} = $ENV{'USER'} || '-';
+   		$self->{'session'}->{'o_sess_id'} = Net::SDP::Time::_ntptime();
+   		$self->{'session'}->{'o_sess_vers'} = Net::SDP::Time::_ntptime();
+   		$self->{'session'}->{'o_net_type'} = 'IN';
+   		$self->{'session'}->{'o_addr_type'} = 'IP4';
+    	
+   		my $hostname = hostname();
+   		if (defined $hostname) {
+   			if (my $h = gethost($hostname)) {
+   				$self->{'session'}->{'o_address'} = $h->name();
+   			}
+   		}
+   	}	
 
     return $self;
 }
@@ -867,6 +881,11 @@ a path to a file, a URL, a C<Net::SAP::Packet> object, SDP data itself or if und
 Returns 1 if successful, or 0 on failure.
 
 
+B<NOTE:> it is faster to pass SDP data striaught into the new() method, as it does not 
+then initiallise the object with default values (which involves doing DNS lookups to
+find out the name of the local host).
+
+
 =item B<parse_file( filepath )>
 
 Parses in an SDP description from the specified file path. Returns 1 if successful, or 0 on failure.
@@ -1202,7 +1221,7 @@ be notified of progress on your bug as I make changes.
 
 =head1 AUTHOR
 
-Nicholas Humfrey, njh@ecs.soton.ac.uk
+Nicholas J Humfrey, njh@cpan.org
 
 =head1 COPYRIGHT AND LICENSE
 

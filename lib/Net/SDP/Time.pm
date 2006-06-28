@@ -4,8 +4,8 @@ package Net::SDP::Time;
 #
 # Net::SDP - Session Description Protocol (rfc2327)
 #
-# Nicholas Humfrey
-# njh@ecs.soton.ac.uk
+# Nicholas J Humfrey
+# njh@cpan.org
 #
 # See the bottom of this file for the POD documentation. 
 #
@@ -15,7 +15,7 @@ use vars qw/$VERSION/;
 use constant NTPOFFSET => 2208988800;
 use Carp;
 
-$VERSION="0.04";
+$VERSION="0.05";
 
 
 
@@ -531,7 +531,7 @@ Example:
 
 =head1 AUTHOR
 
-Nicholas Humfrey, njh@ecs.soton.ac.uk
+Nicholas J Humfrey, njh@cpan.org
 
 Alexander Clouter, alex@digriz.org.uk
 

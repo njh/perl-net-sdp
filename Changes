@@ -1,5 +1,8 @@
 Revision history for Perl extension Net::SDP.
 
+0.05  Wed Jun 28 17:07:53 BST 2006
+	Optimised Net::SDP->new()
+	
 0.04  Mon May  8 18:01:40 BST 2006
 	Added r= support. Thanks to Alexander Clouter
 	Added Net::SDP media_desc_delete_all()

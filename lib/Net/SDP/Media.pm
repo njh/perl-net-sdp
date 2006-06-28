@@ -4,8 +4,8 @@ package Net::SDP::Media;
 #
 # Net::SDP - Session Description Protocol (rfc2327)
 #
-# Nicholas Humfrey
-# njh@ecs.soton.ac.uk
+# Nicholas J Humfrey
+# njh@cpan.org
 #
 # See the bottom of this file for the POD documentation. 
 #
@@ -13,7 +13,7 @@ package Net::SDP::Media;
 use strict;
 use vars qw/$VERSION %avt_profile_map/;
 use Carp;
-$VERSION="0.04";
+$VERSION="0.05";
 
 
 
@@ -585,7 +585,7 @@ Returns a textual representation/summary of the media description.
 
 =head1 AUTHOR
 
-Nicholas Humfrey, njh@ecs.soton.ac.uk
+Nicholas J Humfrey, njh@cpan.org
 
 =head1 COPYRIGHT AND LICENSE
 
