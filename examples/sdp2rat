@@ -8,7 +8,7 @@
 #
 # Version 0.5
 #
-# By Nicholas Humfrey <njh@ecs.soton.ac.uk>
+# By Nicholas Humfrey <njh@cpan.org>
 # Started 27 August 2003
 #
 # History:
@@ -117,7 +117,7 @@ or loaded from a URL (LWP must be available).
 
 =head1 AUTHOR
 
-Nicholas Humfrey, njh@ecs.soton.ac.uk
+Nicholas Humfrey, njh@cpan.org
 
 =head1 COPYRIGHT AND LICENSE
 
