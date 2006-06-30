@@ -881,9 +881,9 @@ a path to a file, a URL, a C<Net::SAP::Packet> object, SDP data itself or if und
 Returns 1 if successful, or 0 on failure.
 
 
-B<NOTE:> it is faster to pass SDP data striaught into the new() method, as it does not 
-then initiallise the object with default values (which involves doing DNS lookups to
-find out the name of the local host).
+B<NOTE:> it is faster to pass SDP data straight into the new() method, as it does not 
+then initialise the object with default values, this involves doing DNS lookups to
+find out the name of the local host.
 
 
 =item B<parse_file( filepath )>
@@ -1196,13 +1196,7 @@ Example:
 
 =item Stricter parsing of SDP, so that it can be used as a validator
 
-=item Deal with multiple email / phone numbers better (e=) (p=)
-
 =item Add support for Zone Adjustments (z=)
-
-=item Net::SDP::Time doesn't handle (r=) Repeat Time Field
-
-=item Deleting and adjusting stuff like attributes
 
 =back
 
