@@ -204,7 +204,7 @@ sub as_string {
 
 	# Permanent
 	if ( $self->is_permanent() ) {
-   		return "Permanent";
+   		return "Broadcasts permanently.";
    	}
 
 
@@ -246,7 +246,7 @@ sub as_string {
 				}
 				# hourly: display minutely times
 				elsif ( $repeat->{interval} == 3600 ) {
-					$time = 'from ' . $startTime[1] . 'mins till ' . $endTime[1] . 'mins past';
+					$time = 'from ' . $startTime[1] . 'mins until ' . $endTime[1] . 'mins past';
 				}
 				# we fall back to the best we can do which is a more direct
 				# textual description of the 'r' field
@@ -272,11 +272,11 @@ sub as_string {
       
 		while ( my $repeater = shift @repeatSlots ) {
 			if ( $repeater->{interval} !~ /^[0-9]+$/ ) {
-				$text .= 'every ' . $repeater->{interval} . ' at ';
+				$text .= 'every ' . $repeater->{interval} . ' ';
 			} else {
 				my $friendlierInterval = _rollup_seconds($repeater->{interval});
 				$friendlierInterval .= 's' if ( $friendlierInterval =~ /^[0-9]+$/ );
-				$text .= "every $friendlierInterval interval at ";
+				$text .= "every $friendlierInterval interval ";
 			}
 			
 			while ( my $repeaterTimes = shift @{$repeater->{times}} ) {
@@ -294,11 +294,11 @@ sub as_string {
 				$text .= ', again';
 			}
 			elsif ( scalar(@repeatSlots) == 1 ) {
-				$text .= ', and finally again ';
+				$text .= ', and again ';
 			}
 		}
 		
-		$text .= ' starting ' . $self->start_time();
+		$text .= ' starting ' . $self->start_time() . '.';
 		
 		return $text;
     }
@@ -306,10 +306,10 @@ sub as_string {
     # no repeat elements so nice and simple
     else {
 		if ( $self->start_time_ntp() == 0 ) {
-			return 'Finishing at ' . $self->end_time();
+			return 'Broadcasts until ' . $self->end_time().'.' ;
 		}
 		else {
-			return $self->start_time() . ' until ' . $self->end_time();
+			return 'Broadcasts from ' . $self->start_time() . ' until ' . $self->end_time().'.' ;
 		}
 	}
 }
