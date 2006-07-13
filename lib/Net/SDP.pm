@@ -50,8 +50,8 @@ sub new {
    	
    	# Parse data if we are passed some
    	if (defined $data) {
-   		$self->parse( $data );
-   	} else {
+		$self->parse( $data );
+    } else {
    		# Use sane defaults
    		$self->{'session'}->{'o_uname'} = $ENV{'USER'} || '-';
    		$self->{'session'}->{'o_sess_id'} = Net::SDP::Time::_ntptime();
@@ -80,7 +80,8 @@ sub parse {
 		if (ref $source eq 'Net::SAP::Packet') {
 			# It is a SAP packet
 			if ($source->payload_type() ne 'application/sdp') {
-				croak "Payload type of Net::SAP::Packet is not application/sdp.";
+				carp "Payload type of Net::SAP::Packet is not application/sdp.";
+				return 0;
 			}
 			return $self->parse_data( $source->payload() );
 
@@ -92,16 +93,22 @@ sub parse {
     		# Looks like a URL
     		return $self->parse_url( $source );
     		
+    	} elsif ($source eq '-') {
+    		# Parse STDIN
+			return $self->parse_stdin();
+    		
     	} elsif ($source ne '') {
     		# Assume it is a filename
      		return $self->parse_file( $source );
-    		
+
     	} else {
-			return $self->parse_stdin();
+    		carp "Failed to parse empty string.";
+    		return 0;
     	}
     
 	} elsif (@_ == 0) {
 		return $self->parse_stdin();
+		
 	} else {
 		croak "Too many parameters for parse()";
 	}
