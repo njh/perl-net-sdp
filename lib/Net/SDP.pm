@@ -50,7 +50,10 @@ sub new {
    	
    	# Parse data if we are passed some
    	if (defined $data) {
-		$self->parse( $data );
+		unless ($self->parse( $data )) {
+			# Failed to parse
+			return undef;
+		}
     } else {
    		# Use sane defaults
    		$self->{'session'}->{'o_uname'} = $ENV{'USER'} || '-';
@@ -876,7 +879,7 @@ Creates a new C<Net::SDP> session description object with default values for
 the required fields.
 
 If the optional paramater C<source> is specified, then it is passed to 
-parse().
+parse(). If parsing fails, than new() will return undef.
 
 
 =item B<parse( source )>
