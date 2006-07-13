@@ -13,7 +13,7 @@ package Net::SDP::Media;
 use strict;
 use vars qw/$VERSION %avt_profile_map/;
 use Carp;
-$VERSION="0.05";
+$VERSION="0.06";
 
 
 
@@ -363,8 +363,10 @@ sub add_format {
 }
 
 sub as_string {
-    my $self=shift;
-	return $self->{'m_media'}. " stream";
+	my $self=shift;
+	my $type = $self->{'m_media'};
+	$type =~ s/^(.+)/\u\L\1/;
+	return "$type Stream";
 }
 
 1;

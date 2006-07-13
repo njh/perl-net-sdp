@@ -10,7 +10,7 @@ use Net::SDP;
 use Net::SDP::Time;
 use Net::SDP::Media;
 
-# Test 1: Module has loaded sucessfully 
+# Test 1: Modules have loaded sucessfully
 ok(1);
 
 

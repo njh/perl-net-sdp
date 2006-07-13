@@ -1,5 +1,10 @@
 Revision history for Perl extension Net::SDP.
 
+0.06  Thu Jul 13 15:16:30 BST 2006
+	Improvements to as_string() in the Time module.
+	No longer tries to read from STDIN when calling $sdp->parse('');
+	Net::SDP->new($data) now returns undef if parsing fails.
+
 0.05  Wed Jun 28 17:07:53 BST 2006
 	Optimised Net::SDP->new()
 	

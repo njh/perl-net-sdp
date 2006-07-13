@@ -15,7 +15,7 @@ use vars qw/$VERSION/;
 use constant NTPOFFSET => 2208988800;
 use Carp;
 
-$VERSION="0.05";
+$VERSION="0.06";
 
 
 
@@ -88,6 +88,11 @@ sub _parse_r {
 	}
 
 	my @values = split / /, $r;
+        if ( $values[0] == 0 ) {
+	  warn "you cannot have a repeat interval of zero";
+	  return 0;
+	}
+	
 	_repeat_push($self, \@values);
 	
 	# Success
@@ -135,21 +140,17 @@ sub end_time_ntp {
 sub start_time_unix {
     my $self=shift;
 	my ($start_time) = @_;
-	if ( defined $start_time ) {
-		$self->{'t_start'} = $start_time + NTPOFFSET;
-		# you cannot have a permanent session with repeat interval
-		$self->repeat_delete_all if ( $start_time == - NTPOFFSET );
-	}
-    return 0 if ($self->{'t_start'}==0);
-    return $self->{'t_start'} - NTPOFFSET;
+	$self->start_time_ntp( $start_time+NTPOFFSET ) if (defined $start_time);
+    return 0 if ($self->start_time_ntp()==0);
+    return $self->start_time_ntp() - NTPOFFSET;
 }
 
 sub end_time_unix {
     my $self=shift;
 	my ($end_time) = @_;
-    $self->{'t_end'} = $end_time+NTPOFFSET if defined $end_time;
-    return 0 if ($self->{'t_end'}==0);
-    return $self->{'t_end'} - NTPOFFSET;
+	$self->end_time_ntp( $end_time+NTPOFFSET ) if (defined $end_time);
+    return 0 if ($self->end_time_ntp()==0);
+    return $self->end_time_ntp() - NTPOFFSET;
 }
 
 sub start_time {
@@ -195,13 +196,165 @@ sub make_unbounded {
 	$self->{'t_end'} = 0;
 
     # you cannot have a permanent session with repeat intervals
-    $self->repeat_init;
+    $self->repeat_delete_all();
 }
 
 sub as_string {
     my $self=shift;
-	return "Permanent Session" if ($self->is_permanent());
-	return $self->start_time()." until ".$self->end_time();
+
+	# Permanent
+	if ( $self->is_permanent() ) {
+   		return "Permanent";
+   	}
+
+
+    # Repeat elements present
+    if ( @{$self->{'r'}} ) {
+		my $text;
+		
+		if ( $self->end_time_ntp() == 0 ) {
+			$text = 'Broadcasts ';
+		}
+		else {
+			$text = 'Until ' . $self->end_time() . ', broadcasts ';
+		}
+
+		my @repeatSlots = ();
+		foreach my $repeat ( @{$self->{'r'}} ) {
+			my $interval = _summariseTime($repeat->{interval});
+			
+			my %results = (
+				interval	=> $interval,
+				times		=> [ ]
+			);
+			
+			my @abbr = qw( Sun Mon Tue Wed Thu Fri Sat );
+			# the results output depends on the interval
+			foreach my $offset ( @{$repeat->{offsets}} ) {
+				my @startTime = localtime($self->start_time_unix() + $offset);
+				my @endTime = localtime($self->start_time_unix() + $offset + $repeat->{duration} );
+				
+				my $time;
+				# weekly: display which day
+				if ( $repeat->{interval} == 604800 ) {
+					$time = 'every ' . $abbr[$startTime[6]] . ', from ';
+					$time .= _buildHourlyTime(\@startTime, \@endTime);
+				}
+				# daily: display which hour
+				elsif ( $repeat->{interval} == 86400 ) {
+					$time = _buildHourlyTime(\@startTime, \@endTime);
+				}
+				# hourly: display minutely times
+				elsif ( $repeat->{interval} == 3600 ) {
+					$time = 'from ' . $startTime[1] . 'mins till ' . $endTime[1] . 'mins past';
+				}
+				# we fall back to the best we can do which is a more direct
+				# textual description of the 'r' field
+				# anyone being caught here might want to consider improving
+				# the above common cases and/or adding their common cases
+				# that I could not think of
+				else {
+					my $friendlierOffset = _rollup_seconds($offset);
+					$friendlierOffset .= 's'
+					if ( $friendlierOffset =~ /^[0-9]+$/ );
+					my $friendlierDuration = _rollup_seconds($repeat->{duration});
+					$friendlierDuration .= 's'
+					if ( $friendlierDuration =~ /^[0-9]+$/ );
+					
+					$time =  " starting $friendlierOffset past the interval and lasting $friendlierDuration";
+				}
+			
+				push @{$results{times}}, $time;
+			}
+		
+			push @repeatSlots, \%results;
+		}
+      
+		while ( my $repeater = shift @repeatSlots ) {
+			if ( $repeater->{interval} !~ /^[0-9]+$/ ) {
+				$text .= 'every ' . $repeater->{interval} . ' at ';
+			} else {
+				my $friendlierInterval = _rollup_seconds($repeater->{interval});
+				$friendlierInterval .= 's' if ( $friendlierInterval =~ /^[0-9]+$/ );
+				$text .= "every $friendlierInterval interval at ";
+			}
+			
+			while ( my $repeaterTimes = shift @{$repeater->{times}} ) {
+				$text .= $repeaterTimes;
+				
+				if ( scalar(@{$repeater->{times}}) > 1 ) {
+					$text .= ', ';
+				}
+				elsif ( scalar(@{$repeater->{times}}) == 1 ) {
+					$text .= ' and ';
+				}
+			}
+			
+			if ( scalar(@repeatSlots) > 1 ) {
+				$text .= ', again';
+			}
+			elsif ( scalar(@repeatSlots) == 1 ) {
+				$text .= ', and finally again ';
+			}
+		}
+		
+		$text .= ' starting ' . $self->start_time();
+		
+		return $text;
+    }
+    
+    # no repeat elements so nice and simple
+    else {
+		if ( $self->start_time_ntp() == 0 ) {
+			return 'Finishing at ' . $self->end_time();
+		}
+		else {
+			return $self->start_time() . ' until ' . $self->end_time();
+		}
+	}
+}
+
+sub _buildHourlyTime {
+	my $startTime = shift;
+	my $endTime = shift;
+	
+	my @times = ( $startTime->[2], $startTime->[1], $endTime->[2], $endTime->[1] );
+	
+	foreach my $item ( 0..(scalar(@times) - 1 ) ) {
+		$times[$item] = ( length($times[$item]) == 1 )
+			? '0' . $times[$item]
+			: $times[$item];
+	}
+	
+	return $times[0] . ':' . $times[1] . ' until ' . $times[2] . ':' . $times[3];
+}
+
+sub _summariseTime {
+	my $value = shift;
+	
+	# we can only do from minutes to weeks as after that how many
+	# days are there in a month, what about a year, etc etc?
+	if ( ( $value % 604800 ) == 0 ) {
+		$value /= 604800;
+		$value = ( $value == 1 ) ? 'week' : $value . ' weeks';
+	}
+	elsif ( ( $value % 86400 ) == 0 ) {
+		$value /= 86400;
+		$value = ( $value == 1 ) ? 'day' : $value . ' days';
+	}
+	elsif ( ( $value % 3600 ) == 0 ) {
+		$value /= 3600;
+		$value = ( $value == 1 ) ? 'hour' : $value . ' hours';
+	}
+	elsif ( ( $value % 60 ) == 0 ) {
+		$value /= 60;
+		$value = ( $value == 1 ) ? 'minute' : $value . ' minutes';
+	}
+	else {
+		$value = ( $value == 1 ) ? 'second' : $value . ' seconds';
+	}
+	
+	return $value;
 }
 
 sub repeat_add {
@@ -210,7 +363,8 @@ sub repeat_add {
 	carp "Missing interval parameter" unless (defined $interval);
 	carp "Missing duration parameter" unless (defined $duration);
 	carp "Missing offsets parameter" unless (defined $offsets);
-    
+	carp "Interval parameter cannot be zero" if ( $interval == 0 );
+	
     if ( $self->is_permanent ) {
 		carp "repeat_add failed, you cannot have a repeat field for a permanent session";
 		return;

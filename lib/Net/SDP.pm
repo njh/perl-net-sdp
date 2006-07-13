@@ -22,7 +22,7 @@ use Sys::Hostname;
 use Net::hostent;
 use Carp;
 
-$VERSION="0.05";
+$VERSION="0.06";
 
 
 

@@ -16,4 +16,5 @@ t/00use.t
 t/10generate.t
 t/10parse.t
 t/20repeat.t
+t/30asstring.t
 META.yml
