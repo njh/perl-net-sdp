@@ -22,17 +22,17 @@ ok( $time->as_string() eq 'Permanent' );
 # Start time, and unbounded end time
 $time->start_time_unix( 1152797400 );
 $time->make_unbounded();
-ok( $time->as_string() eq 'Thu Jul 13 14:30:00 2006 until Unbounded' );
+ok( $time->as_string() eq localtime(1152797400).' until Unbounded' );
 
 # Start time, and unbounded end time
 $time->start_time_unix( 1152797400 );
 $time->end_time_unix( 1152798898 );
-ok( $time->as_string() eq 'Thu Jul 13 14:30:00 2006 until Thu Jul 13 14:54:58 2006' );
+ok( $time->as_string() eq localtime(1152797400).' until '.localtime(1152798898) );
 
 # Add a repeat
 $time->make_unbounded();
 $time->repeat_add( 3600, 600, 0);
-ok( $time->as_string() eq 'Broadcasts every hour at from 30mins till 40mins past starting Thu Jul 13 14:30:00 2006' );
+ok( $time->as_string() eq 'Broadcasts every hour at from 30mins till 40mins past starting '.localtime(1152797400) );
 
 
 
