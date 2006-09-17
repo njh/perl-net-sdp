@@ -108,9 +108,11 @@ sub _parse_m {
 
 	$self->{'m_fmt_list'} = \@formats;
 	
-	($self->{'m_port'}, my $range) = split(/\//, $port);
-	if (defined $range and $range ne '' and $range ne '1') {
-		carp "Port ranges are not supported by Net::SDP.";
+	if (defined $port) {
+		($self->{'m_port'}, my $range) = split(/\//, $port);
+		if (defined $range and $range ne '' and $range ne '1') {
+			carp "Port ranges are not supported by Net::SDP.";
+		}
 	}
 	
 	# Success
@@ -365,7 +367,7 @@ sub add_format {
 sub as_string {
 	my $self=shift;
 	my $type = $self->{'m_media'};
-	$type =~ s/^(.+)/\u\L\1/;
+	$type =~ s/^(.+)/\u\L$1/;
 	return "$type Stream";
 }
 

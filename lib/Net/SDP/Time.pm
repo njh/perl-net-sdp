@@ -363,7 +363,7 @@ sub repeat_add {
 	carp "Missing interval parameter" unless (defined $interval);
 	carp "Missing duration parameter" unless (defined $duration);
 	carp "Missing offsets parameter" unless (defined $offsets);
-	carp "Interval parameter cannot be zero" if ( $interval == 0 );
+	carp "Interval parameter cannot be zero" if ( $interval =~ /^\d+$/ and $interval == 0 );
 	
     if ( $self->is_permanent ) {
 		carp "repeat_add failed, you cannot have a repeat field for a permanent session";
