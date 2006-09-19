@@ -13,7 +13,7 @@ package Net::SDP::Media;
 use strict;
 use vars qw/$VERSION %avt_profile_map/;
 use Carp;
-$VERSION="0.06";
+$VERSION="0.07";
 
 
 
