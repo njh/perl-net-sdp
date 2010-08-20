@@ -1045,8 +1045,8 @@ This method will only return the first email address. B<[e=]>
 Example:
 
 	$email = $sdp->session_email();
-	$sdp->session_email( 'njh@ecs.soton.ac.uk' );
-	$sdp->session_email( ['njh@ecs.soton.ac.uk', 'njh@surgeradio.co.uk'] );
+	$sdp->session_email( 'njh@cpan.org' );
+	$sdp->session_email( ['njh@cpan.org', 'njh@surgeradio.co.uk'] );
 
 =item B<session_email_arrayref()>
 
